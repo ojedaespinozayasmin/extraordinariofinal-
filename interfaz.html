@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Academica - Interfaz Visual</title>
+    <style>
+        body { font-family: Arial; margin: 20px; background: #f0f0f0; }
+        .container { max-width: 1200px; margin: auto; }
+        .panel { background: white; padding: 20px; margin: 10px; border-radius: 10px; }
+        input, button { margin: 5px; padding: 8px; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        pre { background: #f4f4f4; padding: 10px; overflow-x: auto; }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        h3 { color: #333; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gestion Academica API</h1>
+        
+        <div class="grid">
+            <!-- Panel de Categorías -->
+            <div class="panel">
+                <h3>Categorias</h3>
+                <input type="text" id="catName" placeholder="Nombre categoría">
+                <button onclick="crearCategoria()">Crear</button>
+                <button onclick="verCategorias()">Ver todas</button>
+                <pre id="categorias">[]</pre>
+            </div>
+            
+            <!-- Panel de Cursos -->
+            <div class="panel">
+                <h3>Cursos</h3>
+                <input type="text" id="courseName" placeholder="Nombre curso">
+                <input type="number" id="catId" placeholder="ID Categoría">
+                <button onclick="crearCurso()">Crear</button>
+                <button onclick="verCursos()">Ver todos</button>
+                <pre id="cursos">[]</pre>
+            </div>
+            
+            <!-- Panel de Alumnos -->
+            <div class="panel">
+                <h3>Alumnos</h3>
+                <input type="text" id="studentName" placeholder="Nombre alumno">
+                <button onclick="crearAlumno()">Crear</button>
+                <button onclick="verAlumnos()">Ver todos</button>
+                <pre id="alumnos">[]</pre>
+            </div>
+            
+            <!-- Panel de Inscripciones -->
+            <div class="panel">
+                <h3>Inscripciones</h3>
+                <input type="number" id="studentId" placeholder="ID Alumno">
+                <input type="number" id="courseId" placeholder="ID Curso">
+                <button onclick="inscribir()">Inscribir</button>
+                <button onclick="verInscripciones()">Ver inscripciones</button>
+                <pre id="inscripciones">[]</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+        
+        async function crearCategoria() {
+            const name = document.getElementById('catName').value;
+            const response = await fetch(`${API_URL}/categories`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name})
+            });
+            const data = await response.json();
+            alert(JSON.stringify(data));
+            verCategorias();
+        }
+        
+        async function verCategorias() {
+            const response = await fetch(`${API_URL}/categories`);
+            const data = await response.json();
+            document.getElementById('categorias').textContent = JSON.stringify(data, null, 2);
+        }
+        
+        async function crearCurso() {
+            const name = document.getElementById('courseName').value;
+            const category_id = parseInt(document.getElementById('catId').value);
+            const response = await fetch(`${API_URL}/courses`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name, category_id})
+            });
+            const data = await response.json();
+            alert(JSON.stringify(data));
+            verCursos();
+        }
+        
+        async function verCursos() {
+            const response = await fetch(`${API_URL}/courses`);
+            const data = await response.json();
+            document.getElementById('cursos').textContent = JSON.stringify(data, null, 2);
+        }
+        
+        async function crearAlumno() {
+            const name = document.getElementById('studentName').value;
+            const response = await fetch(`${API_URL}/students`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name})
+            });
+            const data = await response.json();
+            alert(JSON.stringify(data));
+            verAlumnos();
+        }
+        
+        async function verAlumnos() {
+            const response = await fetch(`${API_URL}/students`);
+            const data = await response.json();
+            document.getElementById('alumnos').textContent = JSON.stringify(data, null, 2);
+        }
+        
+        async function inscribir() {
+            const student_id = parseInt(document.getElementById('studentId').value);
+            const course_id = parseInt(document.getElementById('courseId').value);
+            const response = await fetch(`${API_URL}/enrollments`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({student_id, course_id})
+            });
+            const data = await response.json();
+            alert(JSON.stringify(data));
+            verInscripciones();
+        }
+        
+        async function verInscripciones() {
+            const response = await fetch(`${API_URL}/enrollments`);
+            const data = await response.json();
+            document.getElementById('inscripciones').textContent = JSON.stringify(data, null, 2);
+        }
+        
+        // Cargar datos al iniciar
+        verCategorias();
+        verCursos();
+        verAlumnos();
+        verInscripciones();
+    </script>
+</body>
+</html>
