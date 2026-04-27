@@ -1,9 +1,9 @@
-from flask import Flask
-from flasgger import Swagger
+from flask import Flask, jsonify
+from flasgger import Swagger, swag_from
 from config import Config
 from models import db
 
-# Importar modelos para que SQLAlchemy los reconozca
+# Importar modelos
 from models.category import Category
 from models.course import Course
 from models.student import Student
@@ -19,15 +19,27 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
     
-    # Inicializar extensiones
-    db.init_app(app)
-    
-    # Configurar Swagger
+    # Configuración de Swagger
     app.config['SWAGGER'] = {
         'title': 'API Academia',
         'uiversion': 3,
-        'specs_route': '/docs'
+        'specs_route': '/docs',
+        'openapi': '3.0.2',
+        'specs': [
+            {
+                'endpoint': 'apispec_1',
+                'route': '/apispec_1.json',
+                'rule_filter': lambda rule: True,
+                'model_filter': lambda tag: True,
+            }
+        ],
+        'static_url_path': '/flasgger_static',
+        'swagger_ui': True,
+        'specs_route': '/docs/'
     }
+    
+    # Inicializar extensiones
+    db.init_app(app)
     Swagger(app)
     
     # Registrar rutas
