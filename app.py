@@ -1,83 +1,46 @@
-from flask import Flask, jsonify
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask
 from flasgger import Swagger
+from config import Config
+from models import db
 
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///proyecto_academy.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SWAGGER'] = {'title': 'API Academia', 'uiversion': 3, 'specs_route': '/docs'}
+# Importar modelos para que SQLAlchemy los reconozca
+from models.category import Category
+from models.course import Course
+from models.student import Student
+from models.enrollment import Enrollment
 
-db = SQLAlchemy(app)
-swagger = Swagger(app)
+# Importar rutas
+from routes.categories import register_routes as register_categories
+from routes.courses import register_routes as register_courses
+from routes.students import register_routes as register_students
+from routes.enrollments import register_routes as register_enrollments
 
-# Modelos
-class Category(db.Model):
-    __tablename__ = 'category'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, nullable=False)
-    courses = db.relationship('Course', backref='category', lazy=True)
-
-class Course(db.Model):
-    __tablename__ = 'course'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, nullable=False)
-    category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
-
-class Student(db.Model):
-    __tablename__ = 'student'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, nullable=False)
-    courses = db.relationship('Course', secondary='enrollment', backref='students')
-
-class Enrollment(db.Model):
-    __tablename__ = 'enrollment'
-    student_id = db.Column(db.Integer, db.ForeignKey('student.id'), primary_key=True)
-    course_id = db.Column(db.Integer, db.ForeignKey('course.id'), primary_key=True)
-
-# Endpoints
-@app.route('/categories', methods=['GET'])
-def get_categories():
-    return jsonify([{'id': c.id, 'name': c.name} for c in Category.query.all()])
-
-@app.route('/categories/<int:id>/courses', methods=['GET'])
-def get_courses_by_category(id):
-    category = Category.query.get_or_404(id)
-    return jsonify([{'id': c.id, 'name': c.name} for c in category.courses])
-
-@app.route('/categories/<int:id>/courses/count', methods=['GET'])
-def count_courses_in_category(id):
-    category = Category.query.get_or_404(id)
-    return jsonify({'category': category.name, 'total_courses': len(category.courses)})
-
-@app.route('/courses', methods=['GET'])
-def get_courses():
-    return jsonify([{'id': c.id, 'name': c.name, 'category_id': c.category_id} for c in Course.query.all()])
-
-@app.route('/courses/<int:id>/students', methods=['GET'])
-def get_students_in_course(id):
-    course = Course.query.get_or_404(id)
-    return jsonify([{'id': s.id, 'name': s.name} for s in course.students])
-
-@app.route('/students', methods=['GET'])
-def get_students():
-    return jsonify([{'id': s.id, 'name': s.name} for s in Student.query.all()])
-
-@app.route('/students/<int:id>/courses', methods=['GET'])
-def get_courses_of_student(id):
-    student = Student.query.get_or_404(id)
-    return jsonify([{'id': c.id, 'name': c.name} for c in student.courses])
-
-@app.route('/enrollments', methods=['GET'])
-def get_enrollments():
-    result = []
-    for student in Student.query.all():
-        result.append({
-            'student': student.name,
-            'courses': [c.name for c in student.courses]
-        })
-    return jsonify(result)
+def create_app():
+    app = Flask(__name__)
+    app.config.from_object(Config)
+    
+    # Inicializar extensiones
+    db.init_app(app)
+    
+    # Configurar Swagger
+    app.config['SWAGGER'] = {
+        'title': 'API Academia',
+        'uiversion': 3,
+        'specs_route': '/docs'
+    }
+    Swagger(app)
+    
+    # Registrar rutas
+    register_categories(app)
+    register_courses(app)
+    register_students(app)
+    register_enrollments(app)
+    
+    return app
 
 if __name__ == '__main__':
+    app = create_app()
+    
     with app.app_context():
         db.create_all()
         
